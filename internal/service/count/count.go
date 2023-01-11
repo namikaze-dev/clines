@@ -3,8 +3,27 @@ package count
 import (
 	"bufio"
 	"io"
+	"log"
 	"strings"
+	"sync"
+	"time"
 )
+
+type Config struct {
+	wg   sync.WaitGroup
+	jobs chan string
+	files int
+
+	Verbose bool
+	Workers int
+	*log.Logger
+}
+
+type CountResult struct {
+	Count int64
+	Time time.Duration
+	Files int
+}
 
 func countlines(r io.Reader) int {
 	var count int
