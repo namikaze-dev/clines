@@ -28,6 +28,10 @@ func Tar(path string, config *Config) (CountResult, error) {
 			continue
 		}
 
+		if thdr.FileInfo().IsDir() {
+			continue
+		}
+
 		c := countlines(trd)
 		config.files++
 		if config.Verbose {
