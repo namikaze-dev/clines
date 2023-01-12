@@ -1,2 +1,2 @@
 # c-lines
-LOC Counter
+Multithreaded LOC Counter
