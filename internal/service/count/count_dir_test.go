@@ -41,30 +41,33 @@ func TestDir(t *testing.T) {
 		}
 	}()
 
-	// add two temp files to dir
-	file, err := setupTempFile(dir, "line 1\nline 2\n\t\nline 3")
-	if err != nil {
-		t.Fatal("unexpected error", err)
+	// Add some files to the dir.
+	var files = []struct {
+		Name, Body string
+	}{
+		{"readme.txt", "This archive contains some text files."},
+		{"gopher.txt", "Gopher names:\namikaze\neren\njack"},
+		{"todo.txt", "\n\n\t\t\nline 1"},
 	}
-	defer file.Close()
-
-	file, err = setupTempFile(dir, "\t\t\n\t\n\n")
-	if err != nil {
-		t.Fatal("unexpected error", err)
+	for _, file := range files {
+		f, err := setupTempFile(dir, file.Body)
+		if err != nil {
+			t.Fatal("unexpected error", err)
+		}
+		f.Close()
 	}
-	defer file.Close()
 
 	got, err := count.Dir(dir, &count.Options{})
 	if err != nil {
 		t.Fatal("unexpected error", err)
 	}
 
-	wantCount := 3
+	wantCount := 6
 	if wantCount != int(got.Count) {
 		t.Errorf("got %v; want %v", got.Count, wantCount)
 	}
 
-	wantFiles := 2
+	wantFiles := 3
 	if wantFiles != int(got.Files) {
 		t.Errorf("got %v; want %v", got.Files, wantFiles)
 	}
