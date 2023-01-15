@@ -24,32 +24,44 @@ func TestZip(t *testing.T) {
 	defer os.Remove(file.Name())
 	defer file.Close()
 
-	zw := zip.NewWriter(file)
-	// add two test files 
-	f, err := zw.Create("file.txt")
-	if err != nil {
-		t.Fatal("unexpected error", err)
-	}
-	f.Write([]byte("line 1\nline 2\n\t\t\nline 3\n\t\nline 4\nline 5"))
+	w := zip.NewWriter(file)
 
-	f, err = zw.Create("file2.txt")
+	// Add some files to the archive.
+	var files = []struct {
+		Name, Body string
+	}{
+		{"readme.txt", "This archive contains some text files."},
+		{"gopher.txt", "Gopher names:\namikaze\neren\njack"},
+		{"todo.txt", "\n\n\t\t\nline 1"},
+	}
+	for _, file := range files {
+		f, err := w.Create(file.Name)
+		if err != nil {
+			t.Fatal("unexpected error", err)
+		}
+		_, err = f.Write([]byte(file.Body))
+		if err != nil {
+			t.Fatal("unexpected error", err)
+		}
+	}
+
+	// Make sure to check the error on Close.
+	err = w.Close()
 	if err != nil {
 		t.Fatal("unexpected error", err)
 	}
-	f.Write([]byte("\n\t\t\n\n\t\t\n\n\t\t\nline 1\nline 2\n\t\t\n"))
-	zw.Close()
 
 	got, err := count.Zip(file.Name(), &count.Options{})
 	if err != nil {
 		t.Fatal("unexpected error", err)
 	}
 
-	wantCount := 7
+	wantCount := 6
 	if wantCount != int(got.Count) {
 		t.Errorf("got %v; want %v", got.Count, wantCount)
 	}
 
-	wantFiles := 2
+	wantFiles := 3
 	if wantFiles != int(got.Files) {
 		t.Errorf("got %v; want %v", got.Files, wantFiles)
 	}
