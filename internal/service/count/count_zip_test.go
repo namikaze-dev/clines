@@ -21,7 +21,7 @@ func TestZip(t *testing.T) {
 	if err != nil {
 		t.Fatal("unexpected error", err)
 	}
-	// defer os.Remove(file.Name())
+	defer os.Remove(file.Name())
 	defer file.Close()
 
 	zw := zip.NewWriter(file)
