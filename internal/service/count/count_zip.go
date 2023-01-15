@@ -12,9 +12,12 @@ type zipJob struct {
 	name string
 }
 
+// Dir concurrently traverses path, counting all files. Dir returns
+// a *Result result 
 func Zip(path string, options *Options) (*Result, error) {
 	var jobs = make(chan zipJob)
 	var config = &Config{}
+	// setup default options for *Options config
 	defaultifyOptions(options)
 
 	for w := 1; w <= options.Workers; w++ {
