@@ -51,7 +51,7 @@ func TestZip(t *testing.T) {
 		t.Fatal("unexpected error", err)
 	}
 
-	got, err := count.Zip(file.Name(), &count.Options{})
+	got, err := count.Zip(file.Name(), &count.Options{Verbose: true})
 	if err != nil {
 		t.Fatal("unexpected error", err)
 	}

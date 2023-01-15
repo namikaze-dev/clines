@@ -50,7 +50,7 @@ func TestTar(t *testing.T) {
 		t.Fatal("unexpected error", err)
 	}
 
-	got, err := count.Tar(file.Name(), &count.Options{})
+	got, err := count.Tar(file.Name(), &count.Options{Verbose: true})
 	if err != nil {
 		t.Fatal("unexpected error", err)
 	}

@@ -57,7 +57,7 @@ func TestDir(t *testing.T) {
 		f.Close()
 	}
 
-	got, err := count.Dir(dir, &count.Options{})
+	got, err := count.Dir(dir, &count.Options{Verbose: true})
 	if err != nil {
 		t.Fatal("unexpected error", err)
 	}
