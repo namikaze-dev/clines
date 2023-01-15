@@ -8,9 +8,12 @@ import (
 	"time"
 )
 
+// Dir concurrently traverses path, counting all files. Dir returns
+// a *Result result 
 func Dir(path string, options *Options) (*Result, error) {
 	var jobs = make(chan string)
 	var config = &Config{}
+	// setup default options for *Options config
 	defaultifyOptions(options)
 
 	for w := 1; w <= options.Workers; w++ {
