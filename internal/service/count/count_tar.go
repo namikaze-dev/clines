@@ -8,8 +8,11 @@ import (
 	"time"
 )
 
+// Tar traverses path, counting all files. Dir returns
+// a *Result result 
 func Tar(path string, options *Options) (*Result, error) {
 	var config = &Config{}
+	// setup default options for *Options config
 	defaultifyOptions(options)
 
 	file, err := os.Open(path)
