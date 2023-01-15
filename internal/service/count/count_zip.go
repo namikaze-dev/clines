@@ -12,21 +12,18 @@ type zipJob struct {
 	name string
 }
 
-func Zip(path string, config *Config) (CountResult, error) {
-	var count int64
-	jobs := make(chan zipJob)
+func Zip(path string, options *Options) (*Result, error) {
+	var jobs = make(chan zipJob)
+	var config = &Config{}
+	defaultifyOptions(options)
 
-	if config.Workers == 0 {
-		config.Workers = 10
-	}
-
-	for w := 1; w <= config.Workers; w++ {
-		go zipWorker(&count, config, jobs)
+	for w := 1; w <= options.Workers; w++ {
+		go zipWorker(&config.count, options, config, jobs)
 	}
 
 	zr, err := zip.OpenReader(path)
 	if err != nil {
-		return CountResult{}, err
+		return nil, err
 	}
 	defer zr.Close()
 
@@ -38,7 +35,7 @@ func Zip(path string, config *Config) (CountResult, error) {
 
 		file, err := f.Open()
 		if err != nil {
-			config.Logger.Panicln(err)
+			options.Logger.Println(err)
 			continue
 		}
 
@@ -48,20 +45,22 @@ func Zip(path string, config *Config) (CountResult, error) {
 		}(f.Name)
 	}
 
-	config.Logger.Println("walk zip complete")
+	if options.Verbose {
+		options.Logger.Println("walk dir complete")
+	}
 	config.wg.Wait()
 
-	return CountResult{Count: count, Files: config.files, Time: time.Since(startTime)}, nil
+	return &Result{Count: config.count, Files: config.files, Time: time.Since(startTime)}, nil
 }
 
-func zipWorker(count *int64, config *Config, jobs <-chan zipJob) {
+func zipWorker(count *int64, options *Options, config *Config, jobs <-chan zipJob) {
 	for job := range jobs {
 		c := countlines(job.rd)
 		atomic.AddInt64(count, int64(c))
 		config.files++
 
-		if config.Verbose {
-			config.Logger.Println(job.name, c)
+		if options.Verbose {
+			options.Logger.Println(job.name, c)
 		}
 
 		job.rd.Close()

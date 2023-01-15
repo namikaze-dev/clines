@@ -8,13 +8,15 @@ import (
 	"time"
 )
 
-func Tar(path string, config *Config) (CountResult, error) {
+func Tar(path string, options *Options) (*Result, error) {
+	var config = &Config{}
+	defaultifyOptions(options)
+
 	file, err := os.Open(path)
 	if err != nil {
-		return CountResult{}, err
+		return nil, err
 	}
 
-	var count int64
 	trd := tar.NewReader(file)
 	startTime := time.Now()
 	for {
@@ -24,7 +26,7 @@ func Tar(path string, config *Config) (CountResult, error) {
 		}
 
 		if err != nil {
-			config.Logger.Println(err)
+			options.Logger.Println(err)
 			continue
 		}
 
@@ -34,11 +36,11 @@ func Tar(path string, config *Config) (CountResult, error) {
 
 		c := countlines(trd)
 		config.files++
-		if config.Verbose {
-			config.Logger.Println(thdr.Name, c)
+		if options.Verbose {
+			options.Logger.Println(thdr.Name, c)
 		}
-		count += int64(c)
+		config.count += int64(c)
 	}
 
-	return CountResult{Count: count, Files: config.files, Time: time.Since(startTime)}, nil
+	return &Result{Count: config.count, Files: config.files, Time: time.Since(startTime)}, nil
 }

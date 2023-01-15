@@ -8,28 +8,25 @@ import (
 	"time"
 )
 
-func Dir(path string, config *Config) (CountResult, error) {
-	var count int64
-	config.jobs = make(chan string)
+func Dir(path string, options *Options) (*Result, error) {
+	var jobs = make(chan string)
+	var config = &Config{}
+	defaultifyOptions(options)
 
-	if config.Workers == 0 {
-		config.Workers = 10
-	}
-
-	for w := 1; w <= config.Workers; w++ {
-		go countWorker(&count, config)
+	for w := 1; w <= options.Workers; w++ {
+		go countWorker(&config.count, options, config, jobs)
 	}
 
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
-		config.Logger.Println(err)
-		return CountResult{}, err
+		options.Logger.Println(err)
+		return nil, err
 	}
 
 	startTime := time.Now()
 	filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			config.Logger.Println(err)
+			options.Logger.Println(err)
 			return nil
 		}
 
@@ -40,31 +37,33 @@ func Dir(path string, config *Config) (CountResult, error) {
 		config.wg.Add(1)
 		config.files++
 		go func() {
-			config.jobs <- path
+			jobs <- path
 		}()
 
 		return nil
 	})
 
-	config.Logger.Println("walk dir complete")
+	if options.Verbose {
+		options.Logger.Println("walk dir complete")
+	}
 	config.wg.Wait()
 
-	return CountResult{Count: count, Files: config.files, Time: time.Since(startTime)}, nil
+	return &Result{Count: config.count, Files: config.files, Time: time.Since(startTime)}, nil
 }
 
-func countWorker(count *int64, config *Config) {
-	for path := range config.jobs {
+func countWorker(count *int64, options *Options, config *Config, jobs chan string) {
+	for path := range jobs {
 		f, err := os.Open(path)
 		if err != nil {
-			config.Logger.Println(err)
+			options.Logger.Println(err)
 			continue
 		}
 
 		c := countlines(f)
 		atomic.AddInt64(count, int64(c))
 
-		if config.Verbose {
-			config.Logger.Println(filepath.Base(path), c)
+		if options.Verbose {
+			options.Logger.Println(filepath.Base(path), c)
 		}
 
 		f.Close()
